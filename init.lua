@@ -124,7 +124,7 @@ require('lazy').setup({
   },
 
   -- Useful plugin to show you pending keybinds.
-  { 'folke/which-key.nvim', opts = {} },
+  { 'folke/which-key.nvim',  opts = {} },
   {
     -- Adds git related signs to the gutter, as well as utilities for managing changes
     'lewis6991/gitsigns.nvim',
@@ -283,6 +283,7 @@ require('lazy').setup({
   --
   --    For additional information see: https://github.com/folke/lazy.nvim#-structuring-your-plugins
   -- { import = 'custom.plugins' },
+  { import = 'custom.plugins.nnn' }
 }, {})
 
 -- [[ Setting options ]]
@@ -397,9 +398,9 @@ end
 local function live_grep_git_root()
   local git_root = find_git_root()
   if git_root then
-    require('telescope.builtin').live_grep {
+    require('telescope.builtin').live_grep({
       search_dirs = { git_root },
-    }
+    })
   end
 end
 
@@ -442,13 +443,11 @@ vim.defer_fn(function()
     ensure_installed = { 'c', 'cpp', 'go', 'lua', 'python', 'rust', 'tsx', 'javascript', 'typescript', 'vimdoc', 'vim', 'bash' },
 
     -- Autoinstall languages that are not installed. Defaults to false (but you can change for yourself!)
-    auto_install = false,
-    -- Install languages synchronously (only applied to `ensure_installed`)
+    auto_install = true,
     sync_install = false,
-    -- List of parsers to ignore installing
     ignore_install = {},
-    -- You can specify additional Treesitter modules here: -- For example: -- playground = {--enable = true,-- },
     modules = {},
+
     highlight = { enable = true },
     indent = { enable = true },
     incremental_selection = {
@@ -641,9 +640,75 @@ cmp.setup {
       luasnip.lsp_expand(args.body)
     end,
   },
-  completion = {
-    completeopt = 'menu,menuone,noinsert',
+  view = {
+    entries = 'native',
+    docs = {
+      auto_open = true
+    }
   },
+  performance = {
+    debounce = 200,  -- Debounce time in milliseconds
+    throttle = 80,  -- Throttle time in milliseconds
+    fetching_timeout = 3000,  -- Timeout for asynchronous fetching in milliseconds
+    confirm_resolve_timeout = 500,  -- Timeout for confirming resolve in milliseconds
+    async_budget = 1000,  -- Asynchronous processing budget in microseconds
+    max_view_entries = 50,  -- Maximum number of entries to display in the completion menu
+  },
+  completion = {
+    completeopt = 'menu,menuone,noselect',
+    autocomplete = {
+      -- You can customize autocomplete behavior here
+      -- For example, to disable autocomplete:
+      enable = false,
+    },
+    get_trigger_characters = function(trigger_characters)
+      return trigger_characters
+    end,
+    keyword_length = 1,  -- Minimum length for keyword completion
+    keyword_pattern = [[\k\+]],  -- Keyword pattern for completion
+  },
+  formatting = {
+    format = function(entry, vim_item)
+      vim_item.menu = ({
+        buffer = '[Buffer]',
+        nvim_lsp = '[LSP]',
+        -- Add more source names and corresponding display labels as needed
+      })[entry.source.name]
+      return vim_item
+    end,
+    fields = {},  -- You need to provide fields for formatting
+    expandable_indicator = true,  -- Customize the expandable indicator as needed
+  },
+  experimental = {
+    ghost_text = true,
+  },
+  preselect = cmp.PreselectMode.None,
+  confirmation = {
+    default_behavior = cmp.ConfirmBehavior.Insert,
+    get_commit_characters = function(commit_characters)
+      return commit_characters
+    end,
+  },
+  sorting = {
+    priority_weight = 2,
+    comparators = {
+      cmp.config.compare.offset,
+      cmp.config.compare.length,
+      cmp.config.compare.score,
+      cmp.config.compare.kind,
+    },
+  },
+  matching = {
+    -- You can customize the matching algorithm. For example, to make it case-sensitive:
+    case_sensitive = true,
+    disallow_fuzzy_matching = false,
+    disallow_fullfuzzy_matching = false,
+    disallow_partial_fuzzy_matching = false,
+    disallow_partial_matching = false,
+    disallow_prefix_unmatching = false,
+  },
+  enabled = true,
+  revision = 2,
   mapping = cmp.mapping.preset.insert {
     ['<C-n>'] = cmp.mapping.select_next_item(),
     ['<C-p>'] = cmp.mapping.select_prev_item(),
